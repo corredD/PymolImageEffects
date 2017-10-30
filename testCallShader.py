@@ -27,7 +27,7 @@ class myCallback(Callback,Wizard):
         self.near = self.m[15]
         self.far = self.m[16]
         self.use_mask_depth=0
-        self.ssao_method = 0
+        self.ssao_method = 1
         self.setShaderSSAO()
         
     def defaultShader(self):

@@ -299,6 +299,9 @@ vec4 Posterization(in  vec3  color){
 }
 
 
+float HashTest(in vec2 scrCoord){
+    return  readDepth(scrCoord) ;
+}
 
 void main() {
     vec4 result = vec4(0.0);
@@ -318,7 +321,11 @@ void main() {
         if (d > 1.0 ) {ao = 1.0 ;}
 		if (d < 0.0 ) {ao = 0.0 ;}		
         }
-
+    if (method==1) {
+    //Pierrick Methods
+    ao=HashTest(scrCoord);
+    
+   }
 	vec4 mixed = combineAO(ao,scrCoord);
 	
 	if (only_ssao == 1) {
