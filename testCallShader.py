@@ -13,10 +13,66 @@ from OpenGL.GL import shaders
 from pymol.callback import Callback
 from pymol.wizard import Wizard
 from pymol import cmd
-import numpy
+import numpy as np
 
-cmd.fetch("1crn", async=0)
-cmd.show("spheres","1crn")
+cmd.reinitialize()
+#cmd.set("auto_show_classified","0")
+cmd.fetch("4xfx", async=0)
+cmd.show_as("surface","polymer")
+cmd.color("grey70","all")
+
+
+class Parameters(Wizard):
+
+    def __init__(self,*arg,**kw):
+        _self = kw.get('_self',cmd)
+        Wizard.__init__(self,_self)        
+        self.message = []
+        for a in arg:
+            if not isinstance(a,types.ListType):
+                self.message.append(a)
+            else:
+                self.message.extend(a)
+        for a in self.message:
+            print " " + _nuke_color_re.sub('',a)
+        self.dismiss = int(kw.get("dismiss",1))
+
+        self.n_cap_name = {
+            '1.0' : 'Open',
+            'posi' : 'NH3+',
+            'acet' : 'Acetyl',
+            }
+        self.n_caps = [ 'none', 'posi', 'acet' ]
+
+    def get_prompt(self):
+        self.prompt = self.message
+        return self.prompt
+
+    def get_panel(self):
+        if not hasattr(self,'dismiss'):
+            self.dismiss=1
+        if self.dismiss==1:
+            return [
+                [ 1, 'Parameters', '' ],
+                [ 3, 'back_intensity', '' ],
+                [ 3, 'line_intensity', '' ],
+                [ 3, 'c_limit', '' ],
+                [ 3, 'c_spacing', '' ],
+                [ 3, 'c_width', '' ],
+                [ 3, 's_spacing', '' ],
+                [ 3, 's_width', '' ],
+                [ 3, 'd_spacing', '' ],
+                [ 3, 'd_width_high', '' ],
+                [ 3, 'd_width_low', '' ],
+                [ 3, 'g_low', '' ],
+                [ 3, 'g_hight', '' ],
+                [ 3, 'l_low', '' ],
+                [ 3, 'l_hight', '' ],
+                [ 3, 'd_width_spread', '' ],
+                [ 2, 'Dismiss', 'cmd.set_wizard()' ]
+                ]
+        else:
+            return []
 
 class myCallback(Callback,Wizard):
     
@@ -29,6 +85,7 @@ class myCallback(Callback,Wizard):
         self.use_mask_depth=0
         self.ssao_method = 1
         self.setShaderSSAO()
+
         
     def defaultShader(self):
         self.VERTEX_SHADER = shaders.compileShader("""#version 120
@@ -41,7 +98,7 @@ class myCallback(Callback,Wizard):
         }""", GL_FRAGMENT_SHADER)
         self.shader = shaders.compileProgram(self.VERTEX_SHADER,self.FRAGMENT_SHADER)
         self.vbo = vbo.VBO(
-            numpy.array( [
+            np.array( [
                 [  0, 1, 0 ],
                 [ -1,-1, 0 ],
                 [  1,-1, 0 ],
@@ -57,6 +114,7 @@ class myCallback(Callback,Wizard):
         self.callback_name = cmd.get_unused_name('_cb')
 
     def setDefaultSSAO_OPTIONS(self):
+
         self.SSAO_OPTIONS={'far': [300.0,0.,1000.,"float"],
                 'near': [self.near,0.,100.,"float"],
                 'method':[self.ssao_method,0,1,"int"],
@@ -76,8 +134,45 @@ class myCallback(Callback,Wizard):
                 'depthTolerance': [0.0,0.0,1.0,"float"],
                 'aorange':[60.0,1.0,500.0,"float"],
                 'negative':[0,0,1,"int"],
-		'correction':[6.0,0.0,1000.0,"float"],
+                'correction':[6.0,0.0,1000.0,"float"],
                 #'force_real_far':[0,0,1,"int"],
+
+                # Add by Pierrick
+                'back_intensity': [1.0,0.0,1.0,"float"],
+                'line_intensity': [0.0,0.0,1.0,"float"],
+                'c_limit': [0.6,0.0,1.0,"float"],
+                'c_spacing': [2.0,0.0,100.0,"float"],
+                'c_width': [10.0,0.0,100.0,"float"],
+                's_spacing': [6.0,0.0,10.0,"float"],
+                's_width': [1.0,0.0,100.0,"float"],
+                'd_spacing': [4.0,0.0,10.0,"float"],
+                'd_width_high': [0.0,0.0,1.0,"float"],
+                'd_width_low': [0.0,0.0,10.0,"float"],
+                'g_low': [16000.0,0.0,1000000.0,"float"],
+                'g_hight': [17000.0,0.0,1000000.0,"float"],
+                'l_low': [5000.0,0.0,1000000.0,"float"],
+                'l_hight': [10000.0,0.0,1000000.0,"float"],
+                'd_width_spread': [1.0,0.0,100.0,"float"],
+                'zl_max': [0.0,0.0,1.0,"float"],
+                'zl_min': [0.0,0.0,1.0,"float"],
+#                'back_intensity': [1.0,0.0,1.0,"float"],
+#                'line_intensity': [0.0,0.0,1.0,"float"],
+#                'c_limit': [0.6,0.0,1.0,"float"],
+#                'c_spacing': [2.0,0.0,100.0,"float"],
+#                'c_width': [10.0,0.0,100.0,"float"],
+#                's_spacing': [6.0,0.0,10.0,"float"],
+#                's_width': [1.0,0.0,100.0,"float"],
+#                'd_spacing': [4.0,0.0,10.0,"float"],
+#                'd_width_high': [0.0,0.0,1.0,"float"],
+#                'd_width_low': [0.0,0.0,10.0,"float"],
+#                'g_low': [16000.0,0.0,1000000.0,"float"],
+#                'g_hight': [17000.0,0.0,1000000.0,"float"],
+#                'l_low': [5000.0,0.0,1000000.0,"float"],
+#                'l_hight': [10000.0,0.0,1000000.0,"float"],
+#                'd_width_spread': [1.0,0.0,100.0,"float"],
+#                'zl_max': [0.0,0.0,1.0,"float"],
+#                'zl_min': [0.0,0.0,1.0,"float"],
+                # End Add by Pierrick 
                 }
         self.SSAO_OPTIONS["near"][0] = 2.0
         #self.Set(near = 2.0)
@@ -89,8 +184,8 @@ class myCallback(Callback,Wizard):
     def setTextureSSAO(self):
         self.depthtextureName = int(glGenTextures(1))
         glPrioritizeTextures(1,[self.depthtextureName],1)
-        #glPrioritizeTextures(numpy.array([self.depthtextureName]),
-        #                     numpy.array([1.]))
+        #glPrioritizeTextures(np.array([self.depthtextureName]),
+        #                     np.array([1.]))
         glBindTexture (GL_TEXTURE_2D, self.depthtextureName);
         glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -103,8 +198,8 @@ class myCallback(Callback,Wizard):
         #SSAO depthexture
         self.illumtextureName = int(glGenTextures(1))
         glPrioritizeTextures(1,[self.illumtextureName],1)
-        #glPrioritizeTextures(numpy.array([self.illumtextureName]),
-        #                     numpy.array([1.]))
+        #glPrioritizeTextures(np.array([self.illumtextureName]),
+        #                     np.array([1.]))
         glBindTexture (GL_TEXTURE_2D, self.illumtextureName);
         glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -118,8 +213,8 @@ class myCallback(Callback,Wizard):
         #SSAO depthexture
         self.rendertextureName = int(glGenTextures(1))
         glPrioritizeTextures(1,[self.rendertextureName],1)
-        #glPrioritizeTextures(numpy.array([self.rendertextureName]),
-        #                     numpy.array([1.]))
+        #glPrioritizeTextures(np.array([self.rendertextureName]),
+        #                     np.array([1.]))
         glBindTexture (GL_TEXTURE_2D, self.rendertextureName);
         glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -131,8 +226,8 @@ class myCallback(Callback,Wizard):
         #depth mask texture
         self.depthmasktextureName = int(glGenTextures(1))
         glPrioritizeTextures(1,[self.depthmasktextureName],1)
-        #glPrioritizeTextures(numpy.array([self.depthmasktextureName]),
-        #                     numpy.array([1.]))
+        #glPrioritizeTextures(np.array([self.depthmasktextureName]),
+        #                     np.array([1.]))
         glBindTexture (GL_TEXTURE_2D, self.depthmasktextureName);
         glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
@@ -150,8 +245,8 @@ class myCallback(Callback,Wizard):
 #        self.randomTexture.Set(enable=1, image=img)
         self.randomtextureName = int(glGenTextures(1))
         glPrioritizeTextures(1,[self.randomtextureName],1)
-        #glPrioritizeTextures(numpy.array([self.randomtextureName]),
-        #                     numpy.array([1.]))
+        #glPrioritizeTextures(np.array([self.randomtextureName]),
+        #                     np.array([1.]))
 #        _gllib.glBindTexture (GL_TEXTURE_2D, self.randomtextureName);       
 #        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 #        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
@@ -169,7 +264,7 @@ class myCallback(Callback,Wizard):
         self.setDefaultSSAO_OPTIONS()
         self.setTextureSSAO()
         #f = _glextlib.glCreateShader(GL_FRAGMENT_SHADER)
-        sfile = open("shaders"+os.sep+"fragSSAO","r")
+        sfile = open(os.getcwd()+os.sep+"shaders"+os.sep+"fragSSAO","r")
         lines = sfile.readlines()
         sfile.close()
         self.fragmentSSAOShaderCode=""
@@ -258,6 +353,8 @@ class myCallback(Callback,Wizard):
         glUniform1f(self.SSAO_LOCATIONS['realfar'],self.far)
         #_glextlib.glUniform1f(self.SSAO_LOCATIONS['realnear'],self.near)
 
+        zl=glReadPixels(0, 18, self._width, self._height,GL_DEPTH_COMPONENT, GL_FLOAT)
+
         for k in self.SSAO_OPTIONS:
             val = self.SSAO_OPTIONS[k][0]
             if k == "correction" :
@@ -274,11 +371,17 @@ class myCallback(Callback,Wizard):
                 self.SSAO_OPTIONS[k][0] = val = 0#int(self.fog.enabled)
                 #if len(self.SSAO_OPTIONS[k]) == 5 :
                 #    self.SSAO_OPTIONS[k][-1].set(val)
+            if k == "zl_min" :
+                self.SSAO_OPTIONS[k][0] = val = np.amin(zl)
+                # print "min",self.SSAO_OPTIONS[k][0]
+            if k == "zl_max" :
+                self.SSAO_OPTIONS[k][0] = val = np.amax(zl)
+                # print "max",self.SSAO_OPTIONS[k][0]          
             if self.SSAO_OPTIONS[k][3] == "float":
                 glUniform1f(self.SSAO_LOCATIONS[k],val)
             else : 
                 glUniform1i(self.SSAO_LOCATIONS[k],val)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT |GL_STENCIL_BUFFER_BIT) 
+        # glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT |GL_STENCIL_BUFFER_BIT) # problem rajoute une visu en lines
         self.drawTexturePolygon()
         self.endSSAO()
 
@@ -356,5 +459,10 @@ class myCallback(Callback,Wizard):
             [ 2, 'Done',''],
         ]
         
-cmd.load_callback(myCallback(), "ssao")    
-#cmd.set_wizard(myCallback())
+cmd.load_callback(myCallback(), "ssao")
+cmd.orient()
+cmd.zoom()
+cmd.clip("near","100000")
+cmd.clip("far","-100000")
+cmd.set_wizard(Parameters())
+
