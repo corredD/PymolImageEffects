@@ -68,7 +68,7 @@ float Scale=1.0;
 float Bias=0.1;
 
 //varying var for method 1
-varying vec2 texCoords; 
+varying vec2 texCoords;
 varying vec3 vCoords;
 varying vec2 vTexCoord;
 
@@ -79,7 +79,7 @@ varying vec3 normal;
 //varying vec4 pos;
 
 float textureSize =RenderedTextureWidth; //size of the texture
-float texelSize = 1.0 / textureSize; //size of one texel 
+float texelSize = 1.0 / textureSize; //size of one texel
 float width = RenderedTextureWidth; //texture width
 float height = RenderedTextureHeight; //texture height
 
@@ -99,12 +99,12 @@ vec2 getRandom(in vec2 uv){
 	}
 
 vec2 rand(in vec2 coord) {
-    //generating random noise 
+    //generating random noise
     float noiseX = (fract(sin(dot(coord ,vec2(12.9898,78.233))) * 43758.5453));
     float noiseY = (fract(sin(dot(coord ,vec2(12.9898,78.233)*2.0)) * 43758.5453));
     return vec2(noiseX,noiseY)*0.004;
     }
- 
+
 vec4 texture2DBilinear(in sampler2D textureSampler, in vec2 uv ){
     // in vertex shaders you should use texture2DLod instead of texture2D
     vec4 tl = texture2D(textureSampler, uv);
@@ -128,13 +128,13 @@ float scaleNearFar(in float val, in float near, in float far){
 }
 
 float readDepth(in vec2 coord){
-    //linearisation of depth but already done 
+    //linearisation of depth but already done
     vec4 val = texture2D(DepthTexture, coord );
     return scaleNearFar(val.x,near,far);//(2.0*near) / (far + near - val.x* (far-near));
     }
 
 float readMaskDepth(in vec2 coord){
-    //linearisation of depth but already done 
+    //linearisation of depth but already done
     vec4 val = texture2D(DepthMaskTexture, coord );
     return scaleNearFar(val.x,near,far);
     }
@@ -159,24 +159,24 @@ float computeAO(in vec2 scrCoord){
 	   }
     else {
        w = (1.0 / RenderedTextureWidth)/clamp(depth,0.05,1.0)+0.001*scale;//+(noise.x*(1.0-noise.x));
-       h = (1.0 / RenderedTextureHeight)/clamp(depth,0.05,1.0)+0.001*scale;//+(noise.y*(1.0-noise.y));	
-	}    
+       h = (1.0 / RenderedTextureHeight)/clamp(depth,0.05,1.0)+0.001*scale;//+(noise.y*(1.0-noise.y));
+	}
     float pw;
     float ph;
-    
+
     float ao;
     float s;
-    
+
     int ringsamples;
-    for (int i = 1; i <= rings; i += 1){   
-        ringsamples = i * samples;   
-        for (int j = 0 ; j < ringsamples ; j += 1)   {      
-            float step = PI*2.0 / float(ringsamples);      
-            pw = (cos(float(j)*step)*float(i));      
-            ph = (sin(float(j)*step)*float(i))*aspect;      
-            d = readDepth( vec2(scrCoord.s+pw*w,scrCoord.t+ph*h));      
-            ao += compareDepths(depth,d);      
-            s += 1.0;   
+    for (int i = 1; i <= rings; i += 1){
+        ringsamples = i * samples;
+        for (int j = 0 ; j < ringsamples ; j += 1)   {
+            float step = PI*2.0 / float(ringsamples);
+            pw = (cos(float(j)*step)*float(i));
+            ph = (sin(float(j)*step)*float(i))*aspect;
+            d = readDepth( vec2(scrCoord.s+pw*w,scrCoord.t+ph*h));
+            ao += compareDepths(depth,d);
+            s += 1.0;
             }
         }
     ao /= s;
@@ -233,7 +233,7 @@ vec4 combineAO(in float ao,in vec2 scrCoord){
 		  ao = 1. - ((1. - ao) * fogf);
 		  ao = fogf;//clamp(ao, 0.0, 1.0);
 		  }
-		} */   
+		} */
 	if (use_mask_depth == 1){
 	   md = texture2D(DepthMaskTexture, scrCoord ).x;//readMaskDepth(scrCoord);
 	   if (d < 1.0) {
@@ -242,7 +242,7 @@ vec4 combineAO(in float ao,in vec2 scrCoord){
 		       ao = 1.0;//no ao white
 			   }
 		   }
-	   }	
+	   }
 	result = vec4(mix(vec3(ao,ao,ao),luminance,black),1.0);
 	if (fog == 1) {
 	   if (use_fog == 1) {
@@ -276,14 +276,14 @@ float calcAO(in vec2 uv, in vec2 coord, in float depth, in vec3 norm){
 	vec[1] = vec2(-1, 0);
 	vec[2] = vec2(0, 1);
 	vec[3] = vec2(0, -1);
-		
+
 	vec2 randomMap = texture2D(RandomTexture, vec2(64,64) * uv / random_size).xy;
 	vec3 normalMap = normal.xyz;
-	//vec3 pos = texture2D(DepthTexture, uv).xyz;//depth 
+	//vec3 pos = texture2D(DepthTexture, uv).xyz;//depth
     float depth = readDepth(uv);
 	n = normalize(normalMap * 2.0 - 1.0);
 	rand = normalize(randomMap * 2.0 - 1.0);
-	
+
 	float ao = 0.0;
  	float rad = SampleRad / depth;
 
@@ -291,11 +291,11 @@ float calcAO(in vec2 uv, in vec2 coord, in float depth, in vec3 norm){
 	for (int i = 0; i < iterations; ++i) {
 		vec2 coord1 = reflect(vec[i], rand) * rad;
 		vec2 coord2 = vec2(coord1.x * 0.707 - coord1.y * 0.707, coord1.x * 0.707 + coord1.y * 0.707);
-  		
+
 		ao += calcAO(uv, coord1 * 0.25, depth, n);
 		ao += calcAO(uv, coord2 * 0.5,depth, n);
 		ao += calcAO(uv, coord1 * 0.75, depth, n);
-		ao += calcAO(uv, coord2, depth, n);	
+		ao += calcAO(uv, coord2, depth, n);
 	    }
 	ao /= float(iterations) * 4.0;
     return ao;
@@ -396,7 +396,7 @@ float get_l_opacity_ave(in vec2 scrCoord, in float l_opacity_X){
 mat3 computeTBNMatrixFromDepth(in vec2 uv)
 {
     // Compute the normal and TBN matrix
-    float depth = readDepth(uv); 
+    float depth = readDepth(uv);
     float ld = -depth;//getLinearDepth(depthTex, uv);
     vec3 x = vec3(uv.x, 0., ld);
     vec3 y = vec3(0., uv.y, ld);
@@ -407,7 +407,7 @@ mat3 computeTBNMatrixFromDepth(in vec2 uv)
     vec3 normal = normalize(cross(x, y));
     return mat3(x, y, normal);
 }
-    
+
 vec4 computeCurvature(in vec2 scrCoord){
   mat3 lookAt = computeTBNMatrixFromDepth(scrCoord);
   vec3 anormal = lookAt[2];
@@ -419,7 +419,7 @@ vec4 computeCurvature(in vec2 scrCoord){
   vec3 xpos = n + dx;
   vec3 yneg = n - dy;
   vec3 ypos = n + dy;
-  float depth = readDepth(scrCoord); 
+  float depth = readDepth(scrCoord);
   //float depth = length(vertex);
   float curvature = (cross(xneg, xpos).y - cross(yneg, ypos).x) * 4.0 / depth;
 
@@ -519,24 +519,25 @@ void main() {
     vec4 result = vec4(0.0);
 	//vec2 coord=(test.xy/test.w+1.0)*0.5;
     vec2 scrCoord = vec2 (1.0 / width, 1.0 / height) * gl_FragCoord.xy;
-	vec4 color = texture2D(RenderedTexture, scrCoord);    
-    float d = readDepth(scrCoord); 
-	float ao;
+	vec4 color = texture2D(RenderedTexture, scrCoord);
+    float d = readDepth(scrCoord);
+	float ao = 0.0f;
 	float fogf = 0.;
 	result = color ;
-    
-    if ((method == 1)&&(only_ssao!=-1)){
+
+    if (((method == 0)||(method == 2))&&(only_ssao!=-1)){
         ao = computeAO(scrCoord);
-		ao = clamp(ao,0.0,1.0);
+		   ao = clamp(ao,0.0,1.0);
    		if ( ao > 1.0 ) {ao = 1.0 ;}
        	if ( ao < 0.0 ) {ao = 0.0 ;}
         if (d > 1.0 ) {ao = 1.0 ;}
-		if (d < 0.0 ) {ao = 0.0 ;}		
+		if (d < 0.0 ) {ao = 0.0 ;}
        if (negative == 1) {d = 1.0  - d;}
         }
 
 	vec4 mixed = combineAO(ao,scrCoord);
-	vec4 ssao_result = vec4(0.0);
+	vec4 ssao_result = vec4(color.rgb,1);
+
 	if (only_ssao == 1) {
 	    ssao_result = mixed;
 		}
@@ -545,13 +546,17 @@ void main() {
 	   }
 	else {
     	ssao_result = vec4(color.rgb,1);
-	}   
-    if (method==1) {
+	}
+	if (method == 1) ssao_result = vec4(color.rgb,1);
+    if ((method == 1)||(method == 2)) {
 		//Pierrick Methods
-		vec4 lum = texture2D(LuminanceTexture, scrCoord); 
+		vec4 lum = texture2D(LuminanceTexture, scrCoord);
 		float hash = HashTest(scrCoord, d, color).r;
 		if (negative == 1) {hash = 1.0  - hash;}
 		result=hash*ssao_result;
+	}
+	else {
+		result = ssao_result;
 	}
 	if (show_mask_depth == 1){
 	   float d = readMaskDepth(scrCoord);//texture2D(DepthMaskTexture, scrCoord ).x;//readMaskDepth(scrCoord);
@@ -567,8 +572,8 @@ void main() {
 	}
 
 
-	//  
-	
-	vec4 lum = texture2D(ShadowTexture, scrCoord);  
+	//
+
+	vec4 lum = texture2D(ShadowTexture, scrCoord);
     gl_FragColor = result;//computeCurvature(scrCoord);
 }

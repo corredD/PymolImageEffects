@@ -5,12 +5,13 @@ Created on Fri Oct 27 13:38:08 2017
 @author: ludov
 """
 import os
-from OpenGL.GL import *
-from OpenGL.GLU import *
-from OpenGL.arrays import vbo
-from OpenGL.GL import shaders
-
-#from pymol.opengl.gl import *
+try :
+    from OpenGL.GL import *
+    from OpenGL.GLU import *
+    from OpenGL.arrays import vbo
+    from OpenGL.GL import shaders
+except:
+    from pymol.opengl.gl import *
 from pymol.callback import Callback
 from pymol.wizard import Wizard
 from pymol import cmd
@@ -27,7 +28,7 @@ class Parameters(Wizard):
 
     def __init__(self,*arg,**kw):
         _self = kw.get('_self',cmd)
-        Wizard.__init__(self,_self)        
+        Wizard.__init__(self,_self)
         self.message = []
         for a in arg:
             if not isinstance(a,types.ListType):
@@ -55,7 +56,7 @@ class Parameters(Wizard):
             if self.ssao.SSAO_OPTIONS[k][3] == "int" and maxi == 1:
                 self.menu[k].append([1, 'true','cmd.get_wizard().set_options("%s",1)'%k])
                 self.menu[k].append([1, 'false','cmd.get_wizard().set_options("%s",0)'%k])
-                if mini == -1 : 
+                if mini == -1 :
                      self.menu[k].append([1, 'disable','cmd.get_wizard().set_options("%s",-1)'%k])
             else :
                 for i in range(6):
@@ -64,7 +65,7 @@ class Parameters(Wizard):
 
     def do_scene(self):
         self.cmd.dirty_wizard()
-        
+
     def do_frame(self,frame):
         self.cmd.dirty_wizard()
 
@@ -74,7 +75,7 @@ class Parameters(Wizard):
     def get_prompt(self):
         self.prompt = self.message
         return self.prompt
-    
+
     def setssao_only(self):
         if self.ssao.SSAO_OPTIONS['only_ssao'][0] == 1:
             self.ssao.SSAO_OPTIONS['only_ssao'][0]=0
@@ -100,7 +101,7 @@ class Parameters(Wizard):
         if self.dismiss==1:
             panel_setup=[]
             panel_setup.append([ 1, 'Parameters', '' ])
-            for k in self.ssao.SSAO_OPTIONS:
+            for k in self.ssao.SSAO_OPTIONS_ORDER:
                 panel_setup.append([ 3, "%s: %3.1f"%(k,self.ssao.SSAO_OPTIONS[k][0]), k ])
             return panel_setup
 #        [
@@ -119,8 +120,8 @@ class Parameters(Wizard):
 #                [ 3, 'l_low', '' ],
 #                [ 3, 'l_hight', '' ],
 #                [ 3, 'd_width_spread', '' ],
-#                [ 2, 'ssao_only', 'param.setssao_only()' ], 
-#                [ 2, 'only_depth', 'param.setonly_depth()' ],   
+#                [ 2, 'ssao_only', 'param.setssao_only()' ],
+#                [ 2, 'only_depth', 'param.setonly_depth()' ],
 #                [ 3, "back_intensity: %3.1f"%self.ssao.SSAO_OPTIONS['back_intensity'][0],'back_intensity'],
 #                [ 2, 'Dismiss', 'cmd.set_wizard()' ]
 #                ]
@@ -128,7 +129,7 @@ class Parameters(Wizard):
             return []
 
 class myCallback(Callback,Wizard):
-    
+
     def __init__(self):
         self.copy_depth_ssao = True
         self._width, self._height = cmd.get_session()['main'][0:2]
@@ -139,7 +140,7 @@ class myCallback(Callback,Wizard):
         self.ssao_method = 1
         self.setShaderSSAO()
 
-        
+
     def defaultShader(self):
         self.VERTEX_SHADER = shaders.compileShader("""#version 120
         void main() {
@@ -163,14 +164,14 @@ class myCallback(Callback,Wizard):
                 [  2, 1, 0 ],
             ],'f')
         )
-    
+
         self.callback_name = cmd.get_unused_name('_cb')
 
     def setDefaultSSAO_OPTIONS(self):
 
         self.SSAO_OPTIONS={'far': [300.0,0.,1000.,"float"],
                 'near': [self.near,0.,100.,"float"],
-                'method':[self.ssao_method,0,1,"int"],
+                'method':[self.ssao_method,0,2,"int"],
                 'do_noise':[0,0,1,"int"],
                 'fog':[0,0,1,"int"],
                 'use_fog':[1,0,1,"int"],
@@ -225,11 +226,11 @@ class myCallback(Callback,Wizard):
 #                'd_width_spread': [1.0,0.0,100.0,"float"],
 #                'zl_max': [0.0,0.0,1.0,"float"],
 #                'zl_min': [0.0,0.0,1.0,"float"],
-                # End Add by Pierrick 
+                # End Add by Pierrick
                 }
         self.SSAO_OPTIONS["near"][0] = 2.0
         #self.Set(near = 2.0)
-        self.SSAO_OPTIONS_ORDER = ['use_fog','only_ssao','only_depth','mix_depth',
+        self.SSAO_OPTIONS_ORDER = ['method', 'only_ssao','only_depth','mix_depth',
 				'negative','do_noise','near','scale','rings','samples','aoCap','aoMultiplier',
 				'aorange','depthTolerance','use_mask_depth']#'far','correction',
 
@@ -300,17 +301,17 @@ class myCallback(Callback,Wizard):
         glPrioritizeTextures(1,[self.randomtextureName],1)
         #glPrioritizeTextures(np.array([self.randomtextureName]),
         #                     np.array([1.]))
-#        _gllib.glBindTexture (GL_TEXTURE_2D, self.randomtextureName);       
+#        _gllib.glBindTexture (GL_TEXTURE_2D, self.randomtextureName);
 #        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 #        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 #        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 #        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 #        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE )
-#        _gllib.glTexImage2D (GL_TEXTURE_2D, 0, self.randomTexture.format, 
-#                             self.randomTexture._width, self.randomTexture._height, 
-#                             0, self.randomTexture.format, GL_UNSIGNED_INT, 
-#                             self.randomTexture.image);     
-        
+#        _gllib.glTexImage2D (GL_TEXTURE_2D, 0, self.randomTexture.format,
+#                             self.randomTexture._width, self.randomTexture._height,
+#                             0, self.randomTexture.format, GL_UNSIGNED_INT,
+#                             self.randomTexture.image);
+
 #        self.shadowmaptexture = int(glGenTextures(1))
 #        glPrioritizeTextures(1,[self.shadowmaptexture],1)
 #        #glPrioritizeTextures(np.array([self.depthmasktextureName]),
@@ -326,7 +327,7 @@ class myCallback(Callback,Wizard):
 #                     512, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None);
         #SSAO randomtexture
         glBindTexture (GL_TEXTURE_2D,0)
-       
+
     def setShaderSSAO(self):
         self.setDefaultSSAO_OPTIONS()
         self.setTextureSSAO()
@@ -347,28 +348,28 @@ class myCallback(Callback,Wizard):
             self.vertexSSAOShaderCode+=l
         self.VERTEX_SHADER = shaders.compileShader(self.vertexSSAOShaderCode, GL_VERTEX_SHADER)
         self.shader = shaders.compileProgram(self.VERTEX_SHADER,self.FRAGMENT_SHADER)
-        
+
         self.SSAO_LOCATIONS = {
             'RandomTexture': glGetUniformLocation( self.shader, 'RandomTexture' ),
             'DepthTexture': glGetUniformLocation( self.shader, 'DepthTexture' ),
             'RenderedTexture': glGetUniformLocation( self.shader, 'RenderedTexture' ),
-            'LuminanceTexture': glGetUniformLocation( self.shader, 'LuminanceTexture' ),                
+            'LuminanceTexture': glGetUniformLocation( self.shader, 'LuminanceTexture' ),
             'DepthMaskTexture': glGetUniformLocation( self.shader, 'DepthMaskTexture' ),
             'RenderedTextureWidth':glGetUniformLocation( self.shader, 'RenderedTextureWidth' ),
-            'RenderedTextureHeight': glGetUniformLocation( self.shader, 'RenderedTextureHeight' ),                
+            'RenderedTextureHeight': glGetUniformLocation( self.shader, 'RenderedTextureHeight' ),
             'realfar': glGetUniformLocation( self.shader, 'realfar' ),
             'ShadowTexture':glGetUniformLocation(self.shader,'ShadowTexture'),
             #'realnear': _glextlib.glGetUniformLocation( self.shaderSSAOProgram, 'realnear' ),
 #                'fogS': _glextlib.glGetUniformLocation( self.shaderSSAOProgram, 'fogS' ),
 #                'fogE': _glextlib.glGetUniformLocation( self.shaderSSAOProgram, 'fogE' ),
             }
-                    
+
         for k in self.SSAO_OPTIONS :
                 self.SSAO_LOCATIONS[k] = glGetUniformLocation( self.shader, k )
 
     def copyDepth(self):
         glBindTexture (GL_TEXTURE_2D, self.depthtextureName);
-        glCopyTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT, 0, 0, self._width, self._height, 0);        
+        glCopyTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT, 0, 0, self._width, self._height, 0);
         self.copy_depth_ssao = False
 
 
@@ -376,26 +377,26 @@ class myCallback(Callback,Wizard):
         if depthmask :
             glBindTexture (GL_TEXTURE_2D, self.depthmasktextureName);
             glCopyTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT, 0, 0, self._width, self._height, 0);
-            return 
-        if self.copy_depth_ssao : 
+            return
+        if self.copy_depth_ssao :
             glBindTexture (GL_TEXTURE_2D, self.depthtextureName);
             glCopyTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT, 0, 0, self._width,self._height, 0);
-        
+
         glBindTexture (GL_TEXTURE_2D, self.illumtextureName);
         glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 0, 0, self._width,
                       self._height, 0);
-        
+
         glBindTexture (GL_TEXTURE_2D, self.rendertextureName);
-        glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, self._width,self._height, 0);        
+        glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, self._width,self._height, 0);
         glBindTexture (GL_TEXTURE_2D, 0);
 
     def DrawShadow(self,):
-        
+
 #        glBindFramebuffer(GL_FRAMEBUFFER, 0 )
         #draw scene from point of view of Light
-        #glViewport(0, 0, shadowMapSize, shadowMapSize); 
-        #self.camera = [self.m[9], self.m[10], self.m[11]]  
-        #self.center = [self.m[12], self.m[13], self.m[14]] 
+        #glViewport(0, 0, shadowMapSize, shadowMapSize);
+        #self.camera = [self.m[9], self.m[10], self.m[11]]
+        #self.center = [self.m[12], self.m[13], self.m[14]]
         cmd.set_view ([\
       self.lightViewMatrix[0][0],   self.lightViewMatrix[0][1],   self.lightViewMatrix[0][2],\
       self.lightViewMatrix[1][0],   self.lightViewMatrix[0][1],   self.lightViewMatrix[0][2],\
@@ -405,12 +406,12 @@ class myCallback(Callback,Wizard):
        2,  8,    0.000000000 ])
        # glMatrixMode(GL_PROJECTION);
        # glLoadMatrixf(self.lightProjectionMatrix);
-        
+
        # glMatrixMode(GL_MODELVIEW);
        # glLoadMatrixf(self.lightViewMatrix);
-        
+
         #se viewport the same size as the shadow map
-        #glViewport(0, 0, shadowMapSize, shadowMapSize); 
+        #glViewport(0, 0, shadowMapSize, shadowMapSize);
        # glViewport(0,0,shadowMapSize,shadowMapSize)
         cmd.draw(512)
         #//Read the depth buffer into the shadow map texture
@@ -418,17 +419,17 @@ class myCallback(Callback,Wizard):
         glCopyTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT, 0, 0, 512,512, 0);
         glBindTexture (GL_TEXTURE_2D, 0);
         cmd.set_view(self.m)
-        
+
 #        glMatrixMode(GL_PROJECTION);
 #        glLoadMatrixf(self.cameraProjectionMatrix);
 #        glMatrixMode(GL_MODELVIEW);
 #        glLoadMatrixf(self.cameraViewMatrix);
-#        
+#
 #        glMatrixMode(GL_PROJECTION);
 #        glPopMatrix();
 #        glMatrixMode(GL_MODELVIEW);
-#        glPopMatrix(); 
-    
+#        glPopMatrix();
+
     def CalculateMatrix(self):
         #//Calculate & save matrices
         #self._width, self._height = cmd.get_session()['main'][0:2]
@@ -438,29 +439,29 @@ class myCallback(Callback,Wizard):
         glLoadIdentity();
         gluPerspective(45.0, float(self._width/self._height),self.near, self.far);#//fovy, aspect,near,far
         self.cameraProjectionMatrix = glGetFloatv(GL_MODELVIEW_MATRIX);
-        
+
         glLoadIdentity();
         gluLookAt(self.camera[0], self.camera[1], self.camera[2],
         0.0, 0.0, 0.0,
         0.0, 1.0, 0.0);
         self.cameraViewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX);
-        
+
         glLoadIdentity();
         gluPerspective(45.0, 1.0, 2.0, 8.0);
         self.lightProjectionMatrix = glGetFloatv(GL_MODELVIEW_MATRIX);
-        
+
         self.lightPosition = eval(cmd.get("light"))
-        
+
         glLoadIdentity();
         gluLookAt( self.lightPosition[0], self.lightPosition[1], self.lightPosition[2],
         0.0, 0.0, 0.0,
         0.0, 1.0, 0.0);
         self.lightViewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX);
-        #glPopMatrix();         
-            
+        #glPopMatrix();
+
 
     def drawSSAO(self,combine=0):
-        #if not self.AR.use_mask: 
+        #if not self.AR.use_mask:
         self.copyBuffer()
         glBindFramebuffer(GL_FRAMEBUFFER, 0 )
         shaders.glUseProgram( self.shader )
@@ -468,31 +469,31 @@ class myCallback(Callback,Wizard):
         glActiveTexture(GL_TEXTURE3);
         glBindTexture (GL_TEXTURE_2D, self.depthtextureName);
         glUniform1i(self.SSAO_LOCATIONS['DepthTexture'],3)
-        
+
         glActiveTexture(GL_TEXTURE4);
         glBindTexture (GL_TEXTURE_2D, self.rendertextureName);
         glUniform1i(self.SSAO_LOCATIONS['RenderedTexture'],4)
-        
+
         glActiveTexture(GL_TEXTURE5);
-        glBindTexture (GL_TEXTURE_2D, self.illumtextureName);        
+        glBindTexture (GL_TEXTURE_2D, self.illumtextureName);
         glUniform1i(self.SSAO_LOCATIONS['LuminanceTexture'],5)
-        
+
         glActiveTexture(GL_TEXTURE6);
-        glBindTexture (GL_TEXTURE_2D, self.randomtextureName);        
-        glUniform1i(self.SSAO_LOCATIONS['RandomTexture'],6)            
-        
+        glBindTexture (GL_TEXTURE_2D, self.randomtextureName);
+        glUniform1i(self.SSAO_LOCATIONS['RandomTexture'],6)
+
         glActiveTexture(GL_TEXTURE7);
-        glBindTexture (GL_TEXTURE_2D, self.depthmasktextureName);        
+        glBindTexture (GL_TEXTURE_2D, self.depthmasktextureName);
         glUniform1i(self.SSAO_LOCATIONS['DepthMaskTexture'],7)
 #
 #        glActiveTexture(GL_TEXTURE8);
-#        glBindTexture (GL_TEXTURE_2D, self.shadowmaptexture);        
+#        glBindTexture (GL_TEXTURE_2D, self.shadowmaptexture);
 #        glUniform1i(self.SSAO_LOCATIONS['ShadowTexture'],7)
 
 
         glUniform1f(self.SSAO_LOCATIONS['RenderedTextureWidth'],self._width)
         glUniform1f(self.SSAO_LOCATIONS['RenderedTextureHeight'],self._height)
-        
+
         glUniform1f(self.SSAO_LOCATIONS['realfar'],self.far)
         #_glextlib.glUniform1f(self.SSAO_LOCATIONS['realnear'],self.near)
 
@@ -519,10 +520,10 @@ class myCallback(Callback,Wizard):
 #                # print "min",self.SSAO_OPTIONS[k][0]
 #            if k == "zl_max" :
 #                self.SSAO_OPTIONS[k][0] = val = np.amax(zl)
-                # print "max",self.SSAO_OPTIONS[k][0]          
+                # print "max",self.SSAO_OPTIONS[k][0]
             if self.SSAO_OPTIONS[k][3] == "float":
                 glUniform1f(self.SSAO_LOCATIONS[k],val)
-            else : 
+            else :
                 glUniform1i(self.SSAO_LOCATIONS[k],val)
         # glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT |GL_STENCIL_BUFFER_BIT) # problem rajoute une visu en lines
         self.drawTexturePolygon()
@@ -530,8 +531,8 @@ class myCallback(Callback,Wizard):
 
     def endSSAO(self):
             glUseProgram(0)
-            glActiveTexture(GL_TEXTURE0);            
-            glBindTexture (GL_TEXTURE_2D, 0); 
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture (GL_TEXTURE_2D, 0);
 
     def drawTexturePolygon(self):
         glPushMatrix()
@@ -544,7 +545,7 @@ class myCallback(Callback,Wizard):
                 float(lViewport[0]+lViewport[2]),
                 float(lViewport[1]),
                 float(lViewport[1]+lViewport[3]),
-                -1, 1)        
+                -1, 1)
         glEnable(GL_BLEND)
 
 #        glEnable(GL_TEXTURE_2D)
@@ -564,12 +565,12 @@ class myCallback(Callback,Wizard):
         glTexCoord2i(0, 1)
         glVertex2i(0, self._height)
         glEnd()
-        glDisable(GL_BLEND)  
-        glBindTexture (GL_TEXTURE_2D, 0);      
+        glDisable(GL_BLEND)
+        glBindTexture (GL_TEXTURE_2D, 0);
         glPopMatrix()
         glMatrixMode(GL_MODELVIEW)
         glPopMatrix()
-        
+
     def load(self):
         cmd.load_callback(self, self.callback_name)
 
@@ -579,12 +580,12 @@ class myCallback(Callback,Wizard):
         self.m = cmd.get_view(0)
         self.near = self.m[15]
         self.far = self.m[16]
-        self.camera = [self.m[9], self.m[10], self.m[11]]  
-        self.center = [self.m[12], self.m[13], self.m[14]] 
+        self.camera = [self.m[9], self.m[10], self.m[11]]
+        self.center = [self.m[12], self.m[13], self.m[14]]
         #self.CalculateMatrix()
         #self.DrawShadow()
         self.drawSSAO()
-     
+
     def default_call(self):
         shaders.glUseProgram(self.shader)
         try:
@@ -598,7 +599,7 @@ class myCallback(Callback,Wizard):
                 glDisableClientState(GL_VERTEX_ARRAY);
         finally:
             shaders.glUseProgram( 0 )
-    
+
     def get_panel(self):
         return [
             [ 1, 'Plane Wizard',''],
